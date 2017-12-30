@@ -1,3 +1,4 @@
+https://github.com/stehrn/docker
 
 #### Run locally within docker
 Build the image, give it tag name 'hello'
@@ -6,7 +7,7 @@ docker build -t hello .
 ```
 Run image in detached mode, expose/publish port
 ```
-docker run -d -p 4000:80 hello
+docker run -d -p 8080:8080 hello
 ```
 View container proess
 ```
@@ -17,10 +18,10 @@ Other useful commands (container ID is shown in ps command)
 docker container logs ab4538097493
 ```
 
-curl http://localhost:4000
+curl http://localhost:8080
 
 #### Run from docker cloud
-Get an account from [https://cloud.docker.com/](Docker cloud) and log in
+Get an account from https://cloud.docker.com/ and log in
 ```
 docker login
 ```
@@ -40,7 +41,17 @@ You should see updated image in docker cloud
 
 ##### Run container sourcing published image
 ```
-docker run -d -p 4000:80 stehrn/get-started:latest
+docker run -d -p 8080:8080 stehrn/get-started:latest
+```
+
+##### Run service
+This will spoin up 5 replicas in one service sourced from published image
+```
+docker swarm init
+docker stack deploy -c docker-compose.yml get-started
+docker service ls
+docker service ps get-started_web
+
 ```
 
 #### Run from command line outside of docker
