@@ -14,5 +14,14 @@ services:
       - "8080:8080"
     networks:
       - webnet
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - /Users/nikstehr/IdeaProjects/docker/data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - webnet
 networks:
   webnet:
