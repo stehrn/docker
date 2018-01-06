@@ -51,9 +51,14 @@ docker swarm init
 docker stack deploy -c docker-compose.yml get-started
 docker service ls
 docker service ps get-started_web
-
 ```
 
+Cleanup:
+```
+docker stack rm get-started
+docker swarm leave --force
+```
+ 
 #### Run from command line outside of docker
 java -jar target/docker-1.0-SNAPSHOT-fat.jar
 curl http://localhost:8080
