@@ -1,56 +1,65 @@
 package io.stehrn;
 
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.redis.RedisClient;
 import io.vertx.redis.RedisOptions;
 
+/**
+ * Deployed from HelloVerticle
+ */
 public class CounterVerticle extends AbstractVerticle {
 
-    private static final String DEFAULT_HOST = "localhost";// "127.0.0.1";
+    private static final Logger logger = LoggerFactory.getLogger(CounterVerticle.class);
+
+    private static final String COUNTER_ADDRESS = "redis.counter";
+    private static final String REDIS_COUNTER_KEY = "counter";
 
     private RedisClient client;
+    private DeliveryOptions deliveryOptions;
 
     @Override
     public void start() throws Exception {
-        // If a config file is set, read the host and port.
-        String host = Vertx.currentContext().config().getString("host");
-        if (host == null) {
-            host = DEFAULT_HOST;
-        }
 
-        // Create the redis client
+        long timeout = config().getLong("counter.timeout.ms", 500L);
+        logger.info("Redis 'counter.timeout.ms' set to " + timeout + "ms");
+        deliveryOptions = new DeliveryOptions().setSendTimeout(timeout);
+
+        String host = config().getString("redis.host", "localhost");
+        logger.info("'redis.host' set to " + host);
         client = RedisClient.create(vertx, new RedisOptions().setHost(host));
 
         // add handler for counter increment
-        MessageConsumer<String> consumer = vertx.eventBus().consumer("redis.counter");
-        consumer.handler(message -> {
-            client.incr(message.body(), count -> {
-                if (count.succeeded()) {
-                    message.reply(count.result());
-                } else {
-                    message.fail(-1, count.cause().getMessage());
-                }
-            });
-        });
+        MessageConsumer<String> consumer = vertx.eventBus().consumer(COUNTER_ADDRESS);
+        consumer.handler(message -> client.incr(message.body(), count -> {
+            if (count.succeeded()) {
+                message.reply(count.result());
+            } else {
+                message.fail(-1, count.cause().getMessage());
+            }
+        }));
     }
 
+    /**
+     * @return Next counter, if we fail to load then relevant error message shown
+     */
     Future<String> count() {
         return next().compose(c -> Future.succeededFuture(Long.toString(c))).otherwise(throwable -> "Failed to get count: " + throwable.getMessage());
     }
 
-    Future<Long> next() {
+    /**
+     * @return Send request to event bus for next counter value
+     */
+    private Future<Long> next() {
         Future<Long> future = Future.future();
-        DeliveryOptions options = new DeliveryOptions();
-        options.setSendTimeout(500L);
 
         // Message<String> reply = awaitResult(h -> eb.send("someaddress", "ping", h));
 
-        vertx.eventBus().send("redis.counter", "counter", options, r -> {
+        vertx.eventBus().send(COUNTER_ADDRESS, REDIS_COUNTER_KEY, deliveryOptions, r -> {
             if (r.succeeded()) {
                 long count = (Long) r.result().body();
                 future.complete(count);
@@ -70,9 +79,5 @@ public class CounterVerticle extends AbstractVerticle {
                 }
             });
         }
-    }
-
-    public static void main(String[] args) {
-
     }
 }

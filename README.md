@@ -1,24 +1,44 @@
-https://github.com/stehrn/docker
+GitHub https://github.com/stehrn/docker
 
 #### Run locally within docker
 Build the image, give it tag name 'hello'
 ```
 docker build -t hello .
 ```
-Run image in detached mode, expose/publish port
+Run image in (-d) detached mode, (-p) publish port. -rm automatically removes container when it exits.
 ```
-docker run -d -p 8080:8080 hello
+docker run -d --rm -p 8080:8080 --name hello_vertex hello:latest 
 ```
-View container proess
+View container process
 ```
 docker ps
 ```
-Other useful commands (container ID is shown in ps command)
+Other useful commands
 ```
-docker container logs ab4538097493
+docker container logs hello_vertex
 ```
-
+View web page
+```
 curl http://localhost:8080
+```
+Note you will see an error: "Failed to get count: Connection refused: localhost/127.0.0.1:6379" unless \
+a separate Redis container has been started. To do so run:
+```
+docker run -d --rm --publish 6379 --volume data:/Users/nikstehr/IdeaProjects/docker/data --name hello_redis redis:latest
+```
+Connect to redis container and run commands:
+```
+docker exec -it hello_redis redis-cli
+KEYS *
+GET counter
+INCR counter
+SET counter 1001
+```
+see [Redis commands](https://redis.io/commands/)
+
+Below we'll see how to compose a service that does this for us.
+
+#####Starting up separate Redis container 
 
 #### Run from docker cloud
 Get an account from https://cloud.docker.com/ and log in
@@ -60,5 +80,6 @@ docker swarm leave --force
 ```
  
 #### Run from command line outside of docker
-java -jar target/docker-1.0-SNAPSHOT-fat.jar
+java -jar target/docker-1.0-SNAPSHOT-fat.jar -conf src/main/resources/application-conf.json
 curl http://localhost:8080
+

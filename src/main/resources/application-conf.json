@@ -1,0 +1,5 @@
+{
+  "redis.host" : "localhost",
+  "http.port" : 8080,
+  "counter.timeout.ms" : 500
+}
