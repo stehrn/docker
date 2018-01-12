@@ -29,9 +29,12 @@ public class CounterVerticle extends AbstractVerticle {
         logger.info("Redis 'counter.timeout.ms' set to " + timeout + "ms");
         deliveryOptions = new DeliveryOptions().setSendTimeout(timeout);
 
-        String host = config().getString("redis.host", "localhost");
+        String host = config().getString("redis.host", "127.0.0.1");
         logger.info("'redis.host' set to " + host);
-        client = RedisClient.create(vertx, new RedisOptions().setHost(host));
+        int port = config().getInteger("redis.port", 6379);
+        logger.info("'redis.port' set to " + port);
+        client = RedisClient.create(vertx, new RedisOptions().setHost(host).setPort(port));
+
 
         // add handler for counter increment
         MessageConsumer<String> consumer = vertx.eventBus().consumer(COUNTER_ADDRESS);
