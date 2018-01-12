@@ -1,11 +1,11 @@
-GitHub https://github.com/stehrn/docker
+[GitHub [self](https://github.com/stehrn/docker)]
 
 #### Run locally within docker
-Build the image, give it tag name 'hello'
+Build the image from Dockerfile, give it tag name 'hello'
 ```
 docker build -t hello .
 ```
-Run image in (-d) detached mode, (-p) publish port. -rm automatically removes container when it exits.
+Run image in (`-d`) detached mode, (`-p`) publish port. `-rm` automatically removes container when it exits.
 ```
 docker run -d --rm -p 8080:8080 --name hello_vertx hello:latest
 ```
@@ -13,30 +13,31 @@ View container process
 ```
 docker ps
 ```
-Other useful commands
+Tail the logs
 ```
-docker container logs hello_vertx
+docker container logs hello_vertx --follow
 ```
 View web page
 ```
 curl http://localhost:8080
 ```
-Note you will see an error: "Failed to get count: Connection refused: localhost/127.0.0.1:6379" unless \
-a separate Redis container has been started. To do so run:
+Note you will see an error: `Failed to get count: Connection refused: localhost/127.0.0.1:6379`. This is 
+because Redis container has been started, to start:
 ```
-docker run -d --rm -p 6379:6379 --name hello_redis --hostname 127.0.0.1 redis:alpine
+docker run -d --rm -p 6379:6379 --name hello_redis redis:alpine
 ```
-('-p 6379:6379' maps the host port 63379 to same container port)
+(`-p 6379:6379` maps the host port 63379 to same container port)
 
-A good (ctl)[https://www.ctl.io/developers/blog/post/docker-networking-rules/] blog on network mapping.
+A good [ctl](https://www.ctl.io/developers/blog/post/docker-networking-rules/) blog on network mapping.
 
-OK, so you still will see an error because the vertx container has redis IP address of localhost (127.0.0.1), not the container port redis running in. \
-To see IP of running redis container:
+Refresh your web page, you still will see an error because the vertx container has redis IP address of localhost (127.0.0.1), not the container port redis running in. \
+
+To see actual IP of running redis container:
 ```
 docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' hello_redis
 ```
-docker compose, explained further below, is best solution to inter-container communication. For now, to get this working \
-edit application-conf.json redis.host, rebuild image and restart container. You should for the 1s time see counter:
+docker compose, explained further below, is best approach for composing related containers. For now, to get this working, \
+edit `application-conf.json` `redis.host`, rebuild image and restart container. You should see counter for the 1s time :
 ```
 Hello, hostname: 423fcb29871a, count: 1
 ```
@@ -51,10 +52,6 @@ INCR counter
 SET counter 1001
 ```
 see [Redis commands](https://redis.io/commands/)
-
-Below we'll see how to compose a service that does this for us.
-
-#####Starting up separate Redis container 
 
 #### Run from docker cloud
 Get an account from https://cloud.docker.com/ and log in
@@ -99,6 +96,8 @@ docker swarm leave --force
 ```
  
 #### Run from command line outside of docker
+```
 java -jar target/docker-1.0-SNAPSHOT-fat.jar -conf src/main/resources/application-conf.json
 curl http://localhost:8080
+```
 
